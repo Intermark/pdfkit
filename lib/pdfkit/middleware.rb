@@ -5,7 +5,7 @@ class PDFKit
       @options    = options
       @conditions = conditions
       @render_pdf = false
-      @caching    = @conditions.delete(:caching) { false }
+      @caching    = true
     end
 
     def call(env)
@@ -25,10 +25,8 @@ class PDFKit
         body = PDFKit.new(body, options).to_pdf
         response = [body]
 
-        if headers['PDFKit-save-pdf']
-          File.open(headers['PDFKit-save-pdf'], 'wb') { |file| file.write(body) } rescue nil
-          headers.delete('PDFKit-save-pdf')
-        end
+
+        File.open(render_to, 'wb') { |file| file.write(body) } rescue nil
 
         unless @caching
           # Do not cache PDFs
@@ -44,6 +42,13 @@ class PDFKit
     end
 
     private
+
+
+    def render_to
+      file_name = Digest::MD5.hexdigest(@request.path) + ".pdf"
+      file_path = @options[:out_path]
+      "#{file_path}/#{file_name}"
+    end
 
     def root_url(env)
       PDFKit.configuration.root_url || "#{env['rack.url_scheme']}://#{env['HTTP_HOST']}/"
