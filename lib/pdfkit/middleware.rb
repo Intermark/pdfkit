@@ -13,7 +13,7 @@ class PDFKit
       @render_pdf = false
       set_request_to_render_as_pdf(env) if render_as_pdf?
 
-      @unless !File.file?(render_to)
+      @if not File.file?(render_to)
         status, headers, response = @app.call(env)
 
         if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
