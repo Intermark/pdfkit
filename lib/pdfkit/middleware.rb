@@ -11,34 +11,41 @@ class PDFKit
     def call(env)
       @request    = Rack::Request.new(env)
       @render_pdf = false
-
       set_request_to_render_as_pdf(env) if render_as_pdf?
-      status, headers, response = @app.call(env)
 
-      if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
-        body = response.respond_to?(:body) ? response.body : response.join
-        body = body.join if body.is_a?(Array)
+      @unless !File.file?(render_to)
+        status, headers, response = @app.call(env)
 
-        root_url = root_url(env)
-        protocol = protocol(env)
-        options = @options.merge(root_url: root_url, protocol: protocol)
-        body = PDFKit.new(body, options).to_pdf
-        response = [body]
+        if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
+          body = response.respond_to?(:body) ? response.body : response.join
+          body = body.join if body.is_a?(Array)
 
+          root_url = root_url(env)
+          protocol = protocol(env)
+          options = @options.merge(root_url: root_url, protocol: protocol)
 
-        File.open(render_to, 'wb') { |file| file.write(body) } rescue nil
+          body = PDFKit.new(body, options).to_pdf
+          response = [body]
+          File.open(render_to, 'wb') { |file| file.write(body) } rescue nil
 
-        unless @caching
-          # Do not cache PDFs
-          headers.delete('ETag')
-          headers.delete('Cache-Control')
+          unless @caching
+            # Do not cache PDFs
+            headers.delete('ETag')
+            headers.delete('Cache-Control')
+          end
+          [status, headers, response]
         end
-
+      else
+        file = File.open(render_to, "rb")
+        body = file.read
+        file.close
+        response                  = [body]
+        headers                   = { }
         headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
         headers['Content-Type']   = 'application/pdf'
+        [200, headers, response]
       end
 
-      [status, headers, response]
     end
 
     private
