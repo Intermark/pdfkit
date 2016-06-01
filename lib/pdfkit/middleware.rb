@@ -11,9 +11,19 @@ class PDFKit
     def call(env)
       @request    = Rack::Request.new(env)
       @render_pdf = false
+
       set_request_to_render_as_pdf(env) if render_as_pdf?
 
-      @if not File.file?(render_to)
+      if File.exists?(render_to)
+        file = File.open(render_to, "rb")
+        body = file.read
+        file.close
+        response                  = [body]
+        headers                   = { }
+        headers["Content-Length"] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
+        headers["Content-Type"]   = "application/pdf"
+        [200, headers, response]
+      else
         status, headers, response = @app.call(env)
 
         if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
@@ -33,19 +43,13 @@ class PDFKit
             headers.delete('ETag')
             headers.delete('Cache-Control')
           end
-          [status, headers, response]
-        end
-      else
-        file = File.open(render_to, "rb")
-        body = file.read
-        file.close
-        response                  = [body]
-        headers                   = { }
-        headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
-        headers['Content-Type']   = 'application/pdf'
-        [200, headers, response]
-      end
 
+          headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
+          headers['Content-Type']   = 'application/pdf'
+        end
+
+        [status, headers, response]
+      end
     end
 
     private
