@@ -53,9 +53,9 @@ class PDFKit
           headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
           headers['Content-Type']   = 'application/pdf'
         end
+        [status, headers, response]
       end
 
-      [status, headers, response]
     end
 
     private
