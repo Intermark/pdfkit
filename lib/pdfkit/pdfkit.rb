@@ -24,7 +24,7 @@ class PDFKit
     @stylesheets = []
 
     options = PDFKit.configuration.default_options.merge(options)
-    options.delete(:quiet) if PDFKit.configuration.verbose?
+    #options.delete(:quiet) if PDFKit.configuration.verbose?
     options.merge! find_options_in_meta(url_file_or_html) unless source.url?
     @root_url = options.delete(:root_url)
     @protocol = options.delete(:protocol)
@@ -44,7 +44,7 @@ class PDFKit
     input_for_command = @source.to_input_for_command
     output_for_command = path ? Shellwords.shellescape(path) : '-'
 
-    "#{shell_escaped_command} #{input_for_command} #{output_for_command}"
+    "/usr/bin/nice -n 19 /usr/bin/ionice -c2 -n7 #{shell_escaped_command} #{input_for_command} #{output_for_command}"
   end
 
   def options
