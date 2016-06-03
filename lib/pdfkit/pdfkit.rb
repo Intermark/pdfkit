@@ -44,7 +44,7 @@ class PDFKit
     input_for_command = @source.to_input_for_command
     output_for_command = path ? Shellwords.shellescape(path) : '-'
 
-    "/usr/bin/nice -n 19 /usr/bin/ionice -c2 -n7 #{shell_escaped_command} #{input_for_command} #{output_for_command}"
+    "ulimit -v 512000; /usr/bin/nice -n 19 /usr/bin/ionice -c2 -n7 #{shell_escaped_command} #{input_for_command} #{output_for_command}"
   end
 
   def options
