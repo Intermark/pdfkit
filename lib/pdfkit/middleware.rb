@@ -38,12 +38,8 @@ class PDFKit
           body = PDFKit.new(body, options).to_pdf
           response = [body]
 
-          File.open(render_to, 'wb') do |f|
-            flock(f, File::LOCK_EX) do |f|
-              f.write(body)
-            end
-          end
-
+          File.open(render_to, 'wb') { |file| file.write(body) } rescue nil
+          
           unless @caching
             # Do not cache PDFs
             headers.delete('ETag')
