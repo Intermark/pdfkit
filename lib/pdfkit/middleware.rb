@@ -38,7 +38,11 @@ class PDFKit
           body = PDFKit.new(body, options).to_pdf
           response = [body]
 
-          File.open(render_to, 'wb') { |file| file.write(body) } rescue nil
+          File.open(render_to, 'wb') do |f|
+            flock(f, File::LOCK_EX) do |f|
+              file.write(body)
+            end
+          end
 
           unless @caching
             # Do not cache PDFs
@@ -91,7 +95,19 @@ class PDFKit
         true
       end
     end
-    
+
+    def flock(file, mode)
+      success = file.flock(mode)
+      if success
+        begin
+          yield file
+        ensure
+          file.flock(File::LOCK_UN)
+        end
+      end
+      return success
+    end
+
     def set_request_to_render_as_pdf(env)
       @render_pdf = true
 
