@@ -40,7 +40,7 @@ class PDFKit
 
           File.open(render_to, 'wb') do |f|
             flock(f, File::LOCK_EX) do |f|
-              file.write(body)
+              f.write(body)
             end
           end
 
