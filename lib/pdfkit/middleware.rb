@@ -15,19 +15,19 @@ class PDFKit
       set_request_to_render_as_pdf(env) if render_as_pdf?
       status, headers, response = @app.call(env)
 
-      if File.exists?(render_to) && rendering_pdf?
-        #file = File.open(render_to, "rb")
-        #body = file.read
-        #file.close
-        #response                  = [body]
-        #headers                   = { }
-        #headers["Content-Length"] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
-        #headers["Content-Type"]   = "application/pdf"
-        #[200, headers, response]
+      if File.exists?(render_to) && rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
+        file = File.open(render_to, "rb")
+        body = file.read
+        file.close
+        response                  = [body]
+        headers                   = { }
+        headers["Content-Length"] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
+        headers["Content-Type"]   = "application/pdf"
+        [200, headers, response]
 
-        File.open(Digest::MD5.hexdigest(@request.path) + ".pdf", 'rb') do |f|
-          send_data f.read.force_encoding('BINARY'), :filename => filename, :type => "application/pdf", :disposition => "attachment"
-        end
+        #File.open(render_to, 'rb') do |f|
+        #  send_data f.read.force_encoding('BINARY'), :filename => Digest::MD5.hexdigest(@request.path) + ".pdf", :type => "application/pdf", :disposition => "attachment"
+        #end
 
       else
         if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
@@ -49,16 +49,11 @@ class PDFKit
             headers.delete('Cache-Control')
           end
 
-          #headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
-          #headers['Content-Type']   = 'application/pdf'
-
-          File.open(Digest::MD5.hexdigest(@request.path) + ".pdf", 'rb') do |f|
-            send_data f.read.force_encoding('BINARY'), :filename => filename, :type => "application/pdf", :disposition => "attachment"
-          end
-
+          headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
+          headers['Content-Type']   = 'application/pdf'
         end
       end
-      #[status, headers, response]
+      [status, headers, response]
     end
 
     private
