@@ -7,7 +7,7 @@ class PDFKit
       @render_pdf = false
       @caching    = true
     end
-    
+
     def call(env)
       @request    = Rack::Request.new(env)
       @render_pdf = false
@@ -16,18 +16,23 @@ class PDFKit
       status, headers, response = @app.call(env)
 
       if File.exists?(render_to) && rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
-        file = File.open(render_to, "rb")
-        body = file.read
-        file.close
-        response                  = [body]
-        headers                   = { }
-        headers["Content-Length"] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
-        headers["Content-Type"]   = "application/pdf"
-        [200, headers, response]
+        #file = File.open(render_to, "rb")
+        #body = file.read
+        #file.close
+        #response                  = [body]
+        #headers                   = { }
+        #headers["Content-Length"] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
+        #headers["Content-Type"]   = "application/pdf"
+        #[200, headers, response]
+
+        File.open(Digest::MD5.hexdigest(@request.path) + ".pdf", 'rb') do |f|
+          send_data f.read.force_encoding('BINARY'), :filename => filename, :type => "application/pdf", :disposition => "attachment"
+        end
+
       else
         if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
-          body = response.respond_to?(:body) ? response.body : response.join
-          body = body.join if body.is_a?(Array)
+          #body = response.respond_to?(:body) ? response.body : response.join
+          #body = body.join if body.is_a?(Array)
 
           root_url = root_url(env)
           protocol = protocol(env)
@@ -44,8 +49,13 @@ class PDFKit
             headers.delete('Cache-Control')
           end
 
-          headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
-          headers['Content-Type']   = 'application/pdf'
+          #headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
+          #headers['Content-Type']   = 'application/pdf'
+
+          File.open(Digest::MD5.hexdigest(@request.path) + ".pdf", 'rb') do |f|
+            send_data f.read.force_encoding('BINARY'), :filename => filename, :type => "application/pdf", :disposition => "attachment"
+          end
+
         end
       end
       [status, headers, response]
