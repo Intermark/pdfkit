@@ -13,9 +13,9 @@ class PDFKit
       @render_pdf = false
 
       set_request_to_render_as_pdf(env) if render_as_pdf?
+      status, headers, response = @app.call(env)
 
-
-      if File.exists?(render_to) && render_as_pdf?
+      if File.exists?(render_to) && rendering_pdf
         file = File.open(render_to, "rb")
         body = file.read
         file.close
@@ -25,8 +25,6 @@ class PDFKit
         headers["Content-Type"]   = "application/pdf"
         [200, headers, response]
       else
-        status, headers, response = @app.call(env)
-
         if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
           body = response.respond_to?(:body) ? response.body : response.join
           body = body.join if body.is_a?(Array)
@@ -39,7 +37,7 @@ class PDFKit
           response = [body]
 
           File.open(render_to, 'wb') { |file| file.write(body) } rescue nil
-          
+
           unless @caching
             # Do not cache PDFs
             headers.delete('ETag')
