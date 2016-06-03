@@ -31,8 +31,8 @@ class PDFKit
 
       else
         if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
-          #body = response.respond_to?(:body) ? response.body : response.join
-          #body = body.join if body.is_a?(Array)
+          body = response.respond_to?(:body) ? response.body : response.join
+          body = body.join if body.is_a?(Array)
 
           root_url = root_url(env)
           protocol = protocol(env)
@@ -58,7 +58,7 @@ class PDFKit
 
         end
       end
-      [status, headers, response]
+      #[status, headers, response]
     end
 
     private
