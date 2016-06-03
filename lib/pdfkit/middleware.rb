@@ -7,7 +7,7 @@ class PDFKit
       @render_pdf = false
       @caching    = true
     end
-
+    
     def call(env)
       @request    = Rack::Request.new(env)
       @render_pdf = false
@@ -46,10 +46,9 @@ class PDFKit
 
           headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
           headers['Content-Type']   = 'application/pdf'
-          [status, headers, response]
         end
       end
-
+      [status, headers, response]
     end
 
     private
