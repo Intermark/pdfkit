@@ -14,7 +14,8 @@ class PDFKit
 
       set_request_to_render_as_pdf(env) if render_as_pdf?
 
-      if File.exists?(render_to)
+
+      if File.exists?(render_to) && render_as_pdf?
         file = File.open(render_to, "rb")
         body = file.read
         file.close
@@ -37,7 +38,7 @@ class PDFKit
           body = PDFKit.new(body, options).to_pdf
           response = [body]
 
-          open(render_to, 'wb') do |f|
+          File.open(render_to, 'wb') do |f|
             flock(f, File::LOCK_EX) do |f|
               file.write(body)
             end
@@ -51,10 +52,10 @@ class PDFKit
 
           headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
           headers['Content-Type']   = 'application/pdf'
-          [status, headers, response]
         end
-
+        [status, headers, response]
       end
+
     end
 
     private
