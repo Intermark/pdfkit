@@ -15,47 +15,45 @@ class PDFKit
       set_request_to_render_as_pdf(env) if render_as_pdf?
 
 
-      if render_as_pdf
-        if File.exists?(render_to)
-          file = File.open(render_to, "rb")
-          body = file.read
-          file.close
-          response                  = [body]
-          headers                   = { }
-          headers["Content-Length"] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
-          headers["Content-Type"]   = "application/pdf"
-          [200, headers, response]
-        else
-          status, headers, response = @app.call(env)
+      if File.exists?(render_to) && render_as_pdf
+        file = File.open(render_to, "rb")
+        body = file.read
+        file.close
+        response                  = [body]
+        headers                   = { }
+        headers["Content-Length"] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
+        headers["Content-Type"]   = "application/pdf"
+        [200, headers, response]
+      else
+        status, headers, response = @app.call(env)
 
-          if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
-            body = response.respond_to?(:body) ? response.body : response.join
-            body = body.join if body.is_a?(Array)
+        if rendering_pdf? && headers['Content-Type'] =~ /text\/html|application\/xhtml\+xml/
+          body = response.respond_to?(:body) ? response.body : response.join
+          body = body.join if body.is_a?(Array)
 
-            root_url = root_url(env)
-            protocol = protocol(env)
-            options = @options.merge(root_url: root_url, protocol: protocol)
+          root_url = root_url(env)
+          protocol = protocol(env)
+          options = @options.merge(root_url: root_url, protocol: protocol)
 
-            body = PDFKit.new(body, options).to_pdf
-            response = [body]
+          body = PDFKit.new(body, options).to_pdf
+          response = [body]
 
-            open(render_to, 'wb') do |f|
-              flock(f, File::LOCK_EX) do |f|
-                file.write(body)
-              end
+          open(render_to, 'wb') do |f|
+            flock(f, File::LOCK_EX) do |f|
+              file.write(body)
             end
-
-            unless @caching
-              # Do not cache PDFs
-              headers.delete('ETag')
-              headers.delete('Cache-Control')
-            end
-
-            headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
-            headers['Content-Type']   = 'application/pdf'
           end
+
+          unless @caching
+            # Do not cache PDFs
+            headers.delete('ETag')
+            headers.delete('Cache-Control')
+          end
+
+          headers['Content-Length'] = (body.respond_to?(:bytesize) ? body.bytesize : body.size).to_s
+          headers['Content-Type']   = 'application/pdf'
+          [status, headers, response]
         end
-        [status, headers, response]
       end
     end
 
