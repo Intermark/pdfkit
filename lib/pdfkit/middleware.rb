@@ -15,7 +15,7 @@ class PDFKit
       set_request_to_render_as_pdf(env) if render_as_pdf?
       status, headers, response = @app.call(env)
 
-      if File.exists?(render_to) && rendering_pdf
+      if File.exists?(render_to) && rendering_pdf?
         file = File.open(render_to, "rb")
         body = file.read
         file.close
